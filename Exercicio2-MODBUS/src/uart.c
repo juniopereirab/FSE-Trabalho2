@@ -93,7 +93,7 @@ void writeUart(int uart0_filestream, char * payload, int length){
 
 void requestUartInteger(int uart0_filestream){
 
-    char payload[5] = {0xA1, 1, 4, 3, 8};
+    char payload[6] = {0x23, 0xA1, 1, 4, 3, 8};
 
     printf("Buffers de memória criados!\n");
 

@@ -9,11 +9,11 @@ int main(int argc, const char * argv[]) {
     int uart0_filestream = initUart();
  
     requestUartInteger(uart0_filestream);
-    requestUartFloat(uart0_filestream);
-    requestUartString(uart0_filestream);
-    sendUartInteger(uart0_filestream);
-    sendUartFloat(uart0_filestream);
-    sendUartString(uart0_filestream);
+    // requestUartFloat(uart0_filestream);
+    // requestUartString(uart0_filestream);
+    // sendUartInteger(uart0_filestream);
+    // sendUartFloat(uart0_filestream);
+    // sendUartString(uart0_filestream);
     
     close(uart0_filestream);
    return 0;
