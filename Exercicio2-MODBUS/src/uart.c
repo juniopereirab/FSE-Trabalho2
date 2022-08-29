@@ -4,6 +4,7 @@
 #include <fcntl.h>          //Used for UART
 #include <termios.h>        //Used for UART
 #include "uart.h"
+#include "crc16.h"
 
 int initUart () {
     int uart0_filestream = -1;
@@ -46,6 +47,7 @@ void readUart(int uart0_filestream, char *type) {
     }
     else if(strcmp(type, "string") == 0){
         rx_length = read(uart0_filestream, received, 256);
+        printf("%s\n", received);
         received[rx_length] = '\0';
     }
 
@@ -73,7 +75,7 @@ void readUart(int uart0_filestream, char *type) {
     }
 }
 
-void writeUart(int uart0_filestream, char * payload, int length){
+void writeUart(int uart0_filestream, unsigned char * payload, int length){
     if (uart0_filestream != -1)
     {
         printf("Escrevendo caracteres na UART ...");
@@ -93,48 +95,67 @@ void writeUart(int uart0_filestream, char * payload, int length){
 
 void requestUartInteger(int uart0_filestream){
 
-    char payload[6] = {0x23, 0xA1, 1, 4, 3, 8};
+    unsigned char payload[7] = {0x01, 0x23, 0xA1, 0x01, 0x04, 0x03, 0x08};
+    short crc = calcula_CRC(payload, 7);
+
+    unsigned char message[9];
+    memcpy(message, &payload, 7);
+    memcpy(&message[7], &crc, 2);
 
     printf("Buffers de memória criados!\n");
 
-    writeUart(uart0_filestream, payload, 5);
+    writeUart(uart0_filestream, message, 9);
     
     readUart(uart0_filestream, "integer");
 }
 
 void requestUartFloat(int uart0_filestream){
     
-    char payload[5] = {0xA2, 1, 4, 3, 8};
+    unsigned char payload[7] = {0x01, 0x23, 0xA2, 0x01, 0x04, 0x03, 0x08};
+    short crc = calcula_CRC(payload, 7);
+
+    unsigned char message[9];
+    memcpy(message, &payload, 7);
+    memcpy(&message[7], &crc, 2);
 
     printf("Buffers de memória criados!\n");
 
-    writeUart(uart0_filestream, payload, 5);
+    writeUart(uart0_filestream, message, 9);
 
     readUart(uart0_filestream, "float");
 }
 
 void requestUartString(int uart0_filestream){
 
-    char payload[5] = {0xA3, 1, 4, 3, 8};
-    
+    unsigned char payload[7] = {0x01, 0x23, 0xA3, 0x01, 0x04, 0x03, 0x08};
+    short crc = calcula_CRC(payload, 7);
+
+    unsigned char message[9];
+    memcpy(message, &payload, 7);
+    memcpy(&message[7], &crc, 2);
     printf("Buffers de memória criados!\n");
 
-    writeUart(uart0_filestream, payload, 5);
+    writeUart(uart0_filestream, payload, 9);
 
     readUart(uart0_filestream, "string");
 }
 
 void sendUartInteger(int uart0_filestream){
-    char payload[9];
-    int dado = 50;
-    char matricula[4] = {1, 4, 3, 8};
+    unsigned char payload[7];
+    unsigned int dado = 13;
 
-    payload[0] = 0xB1;
-    memcpy(payload[1], &dado, 4);
-    memcpy(payload[5], &matricula, 4);
+    unsigned char message[9];
+    payload[0] = 0x01;
+    payload[1] = 0x16;
+    payload[2] = 0xB1;
+    memcpy(&payload[3], &dado, 4);
+
+    short crc = calcula_CRC(payload, 7);
+    memcpy(message, &payload, 7);
+    memcpy(&message[7], &crc, 2);
     printf("Buffers de memória criados!\n");
 
-    writeUart(uart0_filestream, payload, 9);
+    writeUart(uart0_filestream, message, 9);
     readUart(uart0_filestream, "integer");
 }
 
@@ -154,17 +175,21 @@ void sendUartFloat(int uart0_filestream){
 
 void sendUartString(int uart0_filestream){
 
-    char payload[9];
-    char dado[3] = {'o', 'l', 'a'};
-    char matricula[4] = {1, 4, 3, 8};
-
-    payload[0] = 0xB3;
-    payload[1] = 3;
-    memcpy(payload[2], &dado, 3);
-    memcpy(payload[5], &matricula, 4);
-    
+    unsigned char payload[16];
+    unsigned char dado[13] = {'l', 'u', 'l', 'a', ' ','c', 'o', 'n', 'f', 'i', 'r', 'm', 'a'};
+    unsigned char message[18];
+    payload[0] = 0x01;
+    payload[1] = 0x16;
+    payload[2] = 0xB3;
+    payload[3] = 13;
+    memcpy(&payload[4], &dado, 13);
+    short crc = calcula_CRC(payload, 16);
+    memcpy(message, &payload, 16);
+    memcpy(&message[16], &crc, 2);
     printf("Buffers de memória criados!\n");
 
-    writeUart(uart0_filestream, payload, 9);
+    writeUart(uart0_filestream, message, 18);
+    printf("1");
     readUart(uart0_filestream, "string");
+    printf("2");
 }
