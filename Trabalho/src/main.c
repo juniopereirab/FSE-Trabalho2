@@ -62,11 +62,21 @@ void PID() {
 
 void startProgram(){
     wiringPiSetup();
-    // turnResistanceOff();
-    // turnFanOff();
+    turnResistanceOff();
+    turnFanOff();
     connectDisplay();
     bme_connection = connectBme();
     uart_filestream = initUart();
+}
+
+void menu() {
+    int command;
+    do {
+        requestToUart(uart_filestream, GET_KEY_VALUE);
+        command = readFromUart(uart_filestream, GET_KEY_VALUE).int_value;
+        printf("Comando: %d\n", command);
+        delay(500);
+    } while (1);
 }
 
 int main () {
@@ -74,8 +84,7 @@ int main () {
     startProgram();
     signal(SIGINT, exitProgram);
 
-
-    PID();
+    menu();
 
     return 0;
 }
