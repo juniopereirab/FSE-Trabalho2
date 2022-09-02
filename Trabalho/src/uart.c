@@ -43,8 +43,8 @@ void requestToUart(int uart_filestream, unsigned char code){
     sleep(1);
 }
 
-void sendToUart(int uart_filestream, int value){
-    unsigned char package[7] = {0x01, 0x16, SEND_SIGNAL, 0x01, 0x04, 0x03, 0x08};
+void sendToUart(int uart_filestream, unsigned char code, int value){
+    unsigned char package[7] = {0x01, 0x16, code, 0x01, 0x04, 0x03, 0x08};
     unsigned char message[13];
 
     memcpy(message, &package, 7);
