@@ -19,7 +19,8 @@
 #define ENABLE 0b00000100
 
 void connectDisplay(void);
-void printDisplay(float tempI, float tempR, float tempE);
+void printDisplay(float tempI, int minutes, int seconds);
+void printHeating();
 void displayByte(int bits, int mode);
 void displayToggleEnable(int bits);
 
@@ -27,5 +28,6 @@ void displayToggleEnable(int bits);
 void typeFloat(float myFloat);
 void displayLoc(int line);
 void typeln(const char *s);
+void typeInt(int myInt);
 
 #endif

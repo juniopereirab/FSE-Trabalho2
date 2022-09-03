@@ -2,7 +2,7 @@
 
 int fd;
 
-void printDisplay(float TI,float TR, float TE)   {
+void printDisplay(float TI, int minutes, int seconds)   {
 
   if (wiringPiSetup () == -1) exit (1);
 
@@ -12,11 +12,21 @@ void printDisplay(float TI,float TR, float TE)   {
   displayLoc(LINE1);
   typeln("TI");
   typeFloat(TI);
-  typeln(" TR");
-  typeFloat(TR);
   displayLoc(LINE2);
-  typeln("TE");
-  typeFloat(TE);
+  typeln("Timer:");
+  typeInt(minutes);
+  typeln(":");
+  typeInt(seconds);
+}
+
+void printHeating () {
+  if (wiringPiSetup () == -1) exit (1);
+
+  fd = wiringPiI2CSetup(I2C_ADDR);
+
+  connectDisplay();
+  displayLoc(LINE1);
+  typeln("Aquecendo!");
 }
 
 void typeFloat(float myFloat)   {
@@ -25,6 +35,11 @@ void typeFloat(float myFloat)   {
   typeln(buffer);
 }
 
+void typeInt(int myInt)   {
+  char buffer[20];
+  sprintf(buffer, "%d",  myInt);
+  typeln(buffer);
+}
 
 void ClrDisplay(void)   {
   displayByte(0x01, LCD_CMD);

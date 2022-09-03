@@ -15,9 +15,7 @@
 
 int uart_filestream, key_gpio = 1;
 struct bme280_dev bme_connection;
-pthread_t thread;
 pthread_t frying;
-pthread_t timer;
 
 int seconds = 0;
 
@@ -60,39 +58,54 @@ void *PID(void *arg) {
     do {
         requestToUart(uart_filestream, GET_INTERNAL_TEMP);
         TI = readFromUart(uart_filestream, GET_INTERNAL_TEMP).float_value;
-        printf("%f\n", TI);
         double value = pidControl(TI);
         pwmControl(value);
-        printf("%lf\n", value);
 
         requestToUart(uart_filestream, GET_POTENTIOMETER);
         TR = readFromUart(uart_filestream, GET_POTENTIOMETER).float_value;
-        printf("%f\n", TR);
         pidUpdateReference(TR);
 
         TE = getCurrentTemperature(&bme_connection);
         printf("\tTI: %.2f⁰C - TR: %.2f⁰C - TE: %.2f⁰C\n", TI, TR, TE);
-        printDisplay(TI, TR, TE);
+
+        if(timerStarted) {
+            int min = seconds / 60;
+            int sec = seconds % 60;
+            printDisplay(TI, min, sec);
+        } else {
+            printHeating();
+        }
 
         if(TR > TI){
             turnResistanceOn(100);
             turnFanOff();
             value = 100;
+            sendToUart(uart_filestream, SEND_SIGNAL, value);
         }
         else if(!timerStarted){
             timerStarted = 1;
-            pthread_create(&timer, NULL, TimerCountdown, NULL);
+        }
+
+        if(timerStarted) {
+            seconds--;
+            if(TR <= TI) {
+                turnResistanceOff();
+                turnFanOn(100);
+                value = -100;
+                sendToUart(uart_filestream, SEND_SIGNAL, value);
+            }
+            delay(1000);
         }
 
         if(seconds == 0) {
-            pthread_join(timer, NULL);
             mode = 1;
+            turnFanOn(100);
+            pthread_exit(0);
         }
     } while (mode == 2);
 }
 
 void startProgram(){
-    printf("Rodou aqui\n");
     wiringPiSetup();
     turnResistanceOff();
     turnFanOff();
@@ -101,7 +114,7 @@ void startProgram(){
     uart_filestream = initUart();
 }
 
-void *menu (void *arg) {
+void menu() {
     int command;
     do {
         requestToUart(uart_filestream, GET_KEY_VALUE);
@@ -115,18 +128,21 @@ void switchMode(int command) {
     switch(command) {
         case 1:
             if (mode == 0) {
+                printf("Ligou!");
                 sendToUart(uart_filestream, SEND_SYSTEM_STATE, 1);
                 mode = 1;
             }
             break;
         case 2:
             if (mode != 0) {
+                printf("Desligou!");
                 sendToUart(uart_filestream, SEND_SYSTEM_STATE, 0);
                 mode = 0;
             }
             break;
         case 3:
             if(seconds > 0) {
+                printf("Iniciou!");
                 sendToUart(uart_filestream, SEND_FUNC_STATE, 1);
                 mode = 2;
                 pthread_create(&frying, NULL, PID, NULL);
@@ -134,27 +150,27 @@ void switchMode(int command) {
             break;
         case 4:
             if (mode == 2) {
+                printf("Cancelou!");
                 sendToUart(uart_filestream, SEND_FUNC_STATE, 0);
                 mode = 3;
-                pthread_join(frying, NULL);
-                if (seconds >= 0) {
-                    pthread_join(timer, NULL);
-                }
             }
             break;
         case 5:
+            printf("Mais um minuto!");
             seconds = seconds + 60;
             int minutes = seconds / 60;
             sendToUart(uart_filestream, SEND_TIME, minutes);
             break;
         case 6:
             if(seconds > 0) {
+                printf("Menos um minuto!");
                 seconds = seconds - 60;
                 int minutes = seconds / 60;
                 sendToUart(uart_filestream, SEND_TIME, minutes);
             }
             break;
         case 7:
+            printf("Menu pre configurado!");
             // Chama menu pre configurado.
             break;
         default:
@@ -163,13 +179,8 @@ void switchMode(int command) {
 }
 
 int main () {
-    int i;
     signal(SIGINT, exitProgram);
-
     startProgram();
-
-    pthread_create(&thread, NULL, menu, NULL);
-
-    pthread_join(thread, NULL);
+    menu();
     return 0;
 }
