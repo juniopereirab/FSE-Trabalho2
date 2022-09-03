@@ -30,8 +30,8 @@ void exitProgram(){
     printf("Programa encerrado!\n");
     turnResistanceOff();
     turnFanOff();
-    sendToUart(uart_filestream, SEND_SYSTEM_STATE, 0);
-    sendToUart(uart_filestream, SEND_FUNC_STATE, 0);
+    sendToUartByte(uart_filestream, SEND_SYSTEM_STATE, 0);
+    sendToUartByte(uart_filestream, SEND_FUNC_STATE, 0);
     sendToUart(uart_filestream, SEND_TIME, 0);
     closeUart(uart_filestream);
     exit(0);
@@ -68,19 +68,19 @@ void *PID(void *arg) {
             turnFanOff();
             value = 100;
             sendToUart(uart_filestream, SEND_SIGNAL, value);
-        }
-        else if(!timerStarted){
-            timerStarted = 1;
+        } else if(TR <= TI) {
+            turnResistanceOff();
+            turnFanOn(100);
+            value = -100;
+            sendToUart(uart_filestream, SEND_SIGNAL, value);
+            if(!timerStarted) {
+                timerStarted = 1;
+            }
         }
 
         if(timerStarted) {
             seconds--;
-            if(TR <= TI) {
-                turnResistanceOff();
-                turnFanOn(100);
-                value = -100;
-                sendToUart(uart_filestream, SEND_SIGNAL, value);
-            }
+            
             delay(1000);
         }
 
