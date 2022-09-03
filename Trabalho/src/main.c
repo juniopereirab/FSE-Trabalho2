@@ -116,7 +116,6 @@ void switchMode(int command) {
         case 1:
             if (mode == 0) {
                 printf("Ligou!");
-                int a = 1;
                 sendToUartByte(uart_filestream, SEND_SYSTEM_STATE, 1);
                 mode = 1;
             }
