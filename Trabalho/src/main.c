@@ -37,19 +37,6 @@ void exitProgram(){
     exit(0);
 }
 
-void *TimerCountdown (void *arg) {
-    int minutes = seconds / 60;
-    sendToUart(uart_filestream, SEND_TIME, minutes);
-    while (seconds > 0) {
-        if(minutes > seconds / 60) {
-            minutes = seconds / 60;
-            sendToUart(uart_filestream, SEND_TIME, minutes);
-        }
-        seconds--;
-        delay(1000);
-    }
-}
-
 void *PID(void *arg) {
     system("clear");
     float TI, TR, TE;
@@ -129,21 +116,22 @@ void switchMode(int command) {
         case 1:
             if (mode == 0) {
                 printf("Ligou!");
-                sendToUart(uart_filestream, SEND_SYSTEM_STATE, 1);
+                int a = 1;
+                sendToUartByte(uart_filestream, SEND_SYSTEM_STATE, 1);
                 mode = 1;
             }
             break;
         case 2:
             if (mode != 0) {
                 printf("Desligou!");
-                sendToUart(uart_filestream, SEND_SYSTEM_STATE, 0);
+                sendToUartByte(uart_filestream, SEND_SYSTEM_STATE, 0);
                 mode = 0;
             }
             break;
         case 3:
             if(seconds > 0) {
                 printf("Iniciou!");
-                sendToUart(uart_filestream, SEND_FUNC_STATE, 1);
+                sendToUartByte(uart_filestream, SEND_FUNC_STATE, 1);
                 mode = 2;
                 pthread_create(&frying, NULL, PID, NULL);
             }
@@ -151,7 +139,8 @@ void switchMode(int command) {
         case 4:
             if (mode == 2) {
                 printf("Cancelou!");
-                sendToUart(uart_filestream, SEND_FUNC_STATE, 0);
+                int b = 0;
+                sendToUartByte(uart_filestream, SEND_FUNC_STATE, 0);
                 mode = 3;
             }
             break;
